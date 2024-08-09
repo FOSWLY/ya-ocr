@@ -35,6 +35,8 @@ const result = await client.scanByUrl(
 
 Вы можете увидеть больше примеров кода [здесь](https://github.com/FOSWLY/ya-ocr/tree/main/examples)
 
+Как использовать в качестве ShareX OCR смотри [здесь](SHAREX.md)
+
 ## Сборка
 
 Для сборки необходимо наличие:

@@ -5,7 +5,7 @@ import tseslint from "typescript-eslint";
 
 export default tseslint.config(
   {
-    ignores: ["dist/*", "docs/*", "**/*.d.ts"],
+    ignores: ["dist/*", "docs/*", "**/*.d.ts", , "./sharex.js"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
