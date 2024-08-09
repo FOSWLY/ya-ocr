@@ -1,0 +1,27 @@
+{
+  "name": "ya-ocr-examples",
+  "version": "1.0.0",
+  "author": "Toil",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/FOSWLY/ya-ocr"
+  },
+  "devDependencies": {
+    "ofetch": "^1.3.4",
+    "typescript": "^5.4.5"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "bugs": {
+    "url": "https://github.com/FOSWLY/ya-ocr/issues"
+  },
+  "description": "Usage example of ya-ocr",
+  "engines": {
+    "node": ">=18"
+  },
+  "homepage": "https://github.com/FOSWLY/ya-ocr#readme",
+  "license": "MIT",
+  "scripts": {},
+  "type": "module"
+}
