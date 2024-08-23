@@ -62,7 +62,7 @@
     "@types/eslint__js": "^8.42.3",
     "eslint": "^9.8.0",
     "eslint-plugin-oxlint": "^0.8.0",
-    "eslint-plugin-sonarjs": "^1.0.4",
+    "eslint-plugin-sonarjs": "^2.0.0",
     "husky": "^9.1.4",
     "oxlint": "^0.7.0",
     "tsc-esm-fix": "^3.0.2",
