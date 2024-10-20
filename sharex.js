@@ -8,7 +8,7 @@ try {
   const args = process.argv.slice(2);
 
   const result = await new OCRClient().scanByFile(args[0]);
-  clipboardy.writeSync(result.data.text);
+  clipboardy.writeSync(result.text);
 } catch (e) {
   console.error("Error occurred:");
   console.error(e);
