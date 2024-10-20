@@ -1,25 +1,17 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 import { fileTypeFromBuffer } from "file-type";
+import { YandexTranslateProvider } from "@toil/translate/providers";
+import {
+  BaseProviderType,
+  ClientType,
+  YandexTranslateProviderType,
+} from "@toil/translate/types";
+import { ProviderError } from "@toil/translate/errors";
 
-import config from "./config/config";
-import { fetchWithTimeout, getTimestamp } from "./utils/utils";
-import {
-  ClientResponse,
-  FetchFunction,
-  OCRFullBlock,
-  OCRFullData,
-  OCROpts,
-} from "./types/client";
-import {
-  OCRResponse,
-  OCRSuccessResponse,
-  Session,
-  SessionResponse,
-  Srv,
-} from "./types/yandex";
-import { genYandexMetrikaUID, genYandexUID } from "./secure";
-import { supportedTypes } from "./consts";
+import { OCRFullBlock, OCRFullData, OCROpts } from "@/types/client";
+import { OCRSuccessResponse } from "@/types/yandex";
+import { supportedTypes } from "@/consts";
 
 class OCRError extends Error {
   constructor(
@@ -32,45 +24,32 @@ class OCRError extends Error {
   }
 }
 
-export default class OCRClient {
-  host: string;
+export default class OCRClient extends YandexTranslateProvider {
+  withTranslate: boolean;
+  translateLang: ClientType.Lang;
+  ocrUrl = "https://translate.yandex.net";
 
   /**
    * If you don't want to use the classic fetch
    * @includeExample examples/with_ofetch.ts:1-13
    */
-  fetch: FetchFunction;
-  fetchOpts: Record<string, unknown>;
-  userAgent: string = config.userAgent;
-
-  /**
-   * Headers for interacting with Yandex API
-   */
-  headers: Record<string, string> = {
-    "User-Agent": this.userAgent,
-  };
-
-  session: Session | null = null;
-
-  constructor({
-    fetchFn = fetchWithTimeout,
-    fetchOpts = {},
-    headers = {},
-  }: OCROpts = {}) {
-    this.host = "https://translate.yandex.net";
-    this.fetch = fetchFn;
-    this.fetchOpts = fetchOpts;
-    this.headers = { ...this.headers, ...headers };
+  constructor(params: OCROpts = {}) {
+    super(params);
+    this.withTranslate = params.withTranslate ?? false;
+    this.translateLang = params.translateLang ?? this.baseLang;
   }
 
-  getOpts(body: unknown, headers: Record<string, string> = {}) {
-    const origin = this.host;
+  getOpts<T = URLSearchParams>(
+    body: T | null,
+    headers: Record<string, string> = {},
+    method: BaseProviderType.RequestMethod = "POST",
+  ) {
     return {
-      method: "POST",
+      method,
       headers: {
         ...this.headers,
-        Referer: origin,
-        Origin: origin,
+        Referer: this.origin,
+        Origin: this.origin,
         ...headers,
       },
       body,
@@ -78,32 +57,48 @@ export default class OCRClient {
     };
   }
 
-  getSecure(srv: Srv) {
-    return {
-      srv,
-      yu: genYandexUID(),
-      yum: genYandexMetrikaUID(),
-    };
+  isErrorRes<T extends object>(
+    res: Response,
+    data: T | YandexTranslateProviderType.FailedResponse,
+  ): data is YandexTranslateProviderType.FailedResponse {
+    return (
+      res.status > 399 ||
+      Object.hasOwn(data, "message") || // for translation
+      Object.hasOwn(data, "description") // for ocr
+    );
   }
 
-  /**
-   * The standard method for requesting the Yandex API, if necessary, you can override how it is done in the example
-   */
-  async request<T = unknown>(
+  async request<T extends object, B = URLSearchParams>(
     path: string,
-    body: unknown,
+    body: B | null = null,
     headers: Record<string, string> = {},
-  ): Promise<ClientResponse<T>> {
-    const options: any = this.getOpts(body, headers);
+    method: BaseProviderType.RequestMethod = "POST",
+  ): Promise<BaseProviderType.ProviderResponse<T>> {
+    const options = this.getOpts<B>(body, headers, method) as {
+      method: BaseProviderType.RequestMethod;
+      headers: Record<string, string>;
+      body: T | null;
+    };
+    if (body instanceof FormData) {
+      delete options.headers["Content-Type"];
+    }
 
     try {
-      const res = await this.fetch(`${this.host}${path}`, options);
+      const baseOrigin = path.includes("/sessions")
+        ? this.sessionUrl
+        : this.apiUrl;
+      const origin = path.includes("/ocr") ? this.ocrUrl : baseOrigin;
+      const res = await this.fetch(`${origin}${path}`, options);
       const data = (await res.json()) as T;
+      if (this.isErrorRes<T>(res, data)) {
+        throw new ProviderError(data.message ?? res.statusText);
+      }
+
       return {
-        success: res.status === 200,
+        success: true,
         data,
       };
-    } catch (err: unknown) {
+    } catch (err) {
       return {
         success: false,
         data: (err as Error)?.message,
@@ -111,56 +106,32 @@ export default class OCRClient {
     }
   }
 
-  async getSession() {
-    const timestamp = getTimestamp();
-    if (
-      this.session &&
-      this.session.creationTimestamp + this.session.maxAge > timestamp
-    ) {
-      return this.session;
-    }
-
-    return (this.session = await this.createSession());
-  }
-
-  async createSession() {
-    const res = await this.request<SessionResponse>(
-      "/props/api/v1.0/sessions?" +
-        new URLSearchParams(this.getSecure("tr-text")).toString(),
-      null,
-    );
-
-    if (!res.success) {
-      throw new OCRError("Failed to request create session", res);
-    }
-
-    return res.data.session;
-  }
-
   async scanByBlob(data: Blob | File) {
     const { id: sid } = await this.getSession();
     const body = new FormData();
-    body.append("file", data, "test");
+    body.append("file", data, "image");
 
-    const res = await this.request<OCRResponse>(
-      "/ocr/v1.1/recognize?" +
-        new URLSearchParams({
-          sid,
-          lang: "*", // autodetect language
-          rotate: "auto",
-          ...this.getSecure("tr-image"),
-        }).toString(),
+    const params = this.getParams("tr-image", {
+      sid,
+      lang: "*", // autodetect language
+      rotate: "auto",
+    });
+    const res = await this.request<OCRSuccessResponse, FormData>(
+      `/ocr/v1.1/recognize?${params}`,
       body,
     );
 
-    if (!res.success) {
+    if (!this.isSuccessProviderRes<OCRSuccessResponse>(res)) {
       throw new OCRError("Failed to request OCR", res);
     }
 
-    const blocks: OCRFullBlock[] = (
-      res.data as OCRSuccessResponse
-    ).data.blocks.map((block) => {
+    let resultData = res.data.data;
+
+    const textToTranslate: string[] = [];
+
+    let blocks: OCRFullBlock[] = resultData.blocks.map((block) => {
       const text = block.boxes.map((box) => box.text).join(" ");
+      textToTranslate.push(text);
       return {
         ...block,
         text,
@@ -169,14 +140,35 @@ export default class OCRClient {
 
     const text = blocks.map((block) => block.text).join("\n");
     const result: OCRFullData = {
-      ...(res.data as OCRSuccessResponse).data,
+      ...resultData,
       blocks,
       text,
     };
 
+    if (!this.withTranslate) {
+      return result;
+    }
+
+    const translateData = await this.translate(
+      textToTranslate,
+      `${resultData.detected_lang}-${this.translateLang}`,
+    );
+
+    blocks = blocks.map((block, idx) => {
+      return {
+        ...block,
+        translatedText: translateData.translations?.[idx],
+      };
+    });
+    const translatedText = blocks
+      .map((block) => block.translatedText)
+      .join("\n");
+
     return {
-      status: res.success,
-      data: result,
+      ...resultData,
+      blocks,
+      text,
+      translatedText,
     };
   }
 
