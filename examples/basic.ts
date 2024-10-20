@@ -13,3 +13,13 @@ console.log(response);
 response = await client.scanByFile("../tests/test.jpg");
 
 console.log(response);
+
+// with translate text
+const translateClient = new OCRClient({
+  withTranslate: true,
+  translateLang: "ru",
+});
+
+response = await translateClient.scanByFile("../tests/test.jpg");
+
+console.log(response);
