@@ -1,4 +1,4 @@
-export { default } from "./client";
+export { default } from "@/client";
 
-export * as OCRTypes from "./types/index";
-export * as OCRConsts from "./consts";
+export * as OCRTypes from "@/types/index";
+export * as OCRConsts from "@/consts";

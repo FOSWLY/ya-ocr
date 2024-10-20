@@ -1,13 +1,3 @@
-export type Session = {
-  creationTimestamp: number; // in secs
-  id: string;
-  maxAge: number;
-  status: string; // active
-  statusCode: number;
-};
-
-export type Srv = "tr-text" | "tr-image";
-export type SessionResponse = Record<"session", Session>;
 export type ErrorType = "BadArgument" | "UnsupportedImageType" | "BadRequest"; // maybe are still some missing
 
 export type OCRFailedResponse = {
