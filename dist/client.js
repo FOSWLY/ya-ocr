@@ -1,9 +1,8 @@
 import path from "node:path";
 import { readFile } from "node:fs/promises";
 import { fileTypeFromBuffer } from "file-type";
-import config from "./config/config.js";
-import { fetchWithTimeout, getTimestamp } from "./utils/utils.js";
-import { genYandexMetrikaUID, genYandexUID } from "./secure.js";
+import { YandexTranslateProvider } from "@toil/translate/providers";
+import { ProviderError } from "@toil/translate/errors";
 import { supportedTypes } from "./consts.js";
 class OCRError extends Error {
     data;
@@ -14,49 +13,50 @@ class OCRError extends Error {
         this.message = message;
     }
 }
-export default class OCRClient {
-    host;
-    fetch;
-    fetchOpts;
-    userAgent = config.userAgent;
-    headers = {
-        "User-Agent": this.userAgent,
-    };
-    session = null;
-    constructor({ fetchFn = fetchWithTimeout, fetchOpts = {}, headers = {}, } = {}) {
-        this.host = "https://translate.yandex.net";
-        this.fetch = fetchFn;
-        this.fetchOpts = fetchOpts;
-        this.headers = { ...this.headers, ...headers };
+export default class OCRClient extends YandexTranslateProvider {
+    withTranslate;
+    translateLang;
+    ocrUrl = "https://translate.yandex.net";
+    constructor(params = {}) {
+        super(params);
+        this.withTranslate = params.withTranslate ?? false;
+        this.translateLang = params.translateLang ?? this.baseLang;
     }
-    getOpts(body, headers = {}) {
-        const origin = this.host;
+    getOpts(body, headers = {}, method = "POST") {
         return {
-            method: "POST",
+            method,
             headers: {
                 ...this.headers,
-                Referer: origin,
-                Origin: origin,
+                Referer: this.origin,
+                Origin: this.origin,
                 ...headers,
             },
             body,
             ...this.fetchOpts,
         };
     }
-    getSecure(srv) {
-        return {
-            srv,
-            yu: genYandexUID(),
-            yum: genYandexMetrikaUID(),
-        };
+    isErrorRes(res, data) {
+        return (res.status > 399 ||
+            Object.hasOwn(data, "message") ||
+            Object.hasOwn(data, "description"));
     }
-    async request(path, body, headers = {}) {
-        const options = this.getOpts(body, headers);
+    async request(path, body = null, headers = {}, method = "POST") {
+        const options = this.getOpts(body, headers, method);
+        if (body instanceof FormData) {
+            delete options.headers["Content-Type"];
+        }
         try {
-            const res = await this.fetch(`${this.host}${path}`, options);
+            const baseOrigin = path.includes("/sessions")
+                ? this.sessionUrl
+                : this.apiUrl;
+            const origin = path.includes("/ocr") ? this.ocrUrl : baseOrigin;
+            const res = await this.fetch(`${origin}${path}`, options);
             const data = (await res.json());
+            if (this.isErrorRes(res, data)) {
+                throw new ProviderError(data.message ?? res.statusText);
+            }
             return {
-                success: res.status === 200,
+                success: true,
                 data,
             };
         }
@@ -67,38 +67,24 @@ export default class OCRClient {
             };
         }
     }
-    async getSession() {
-        const timestamp = getTimestamp();
-        if (this.session &&
-            this.session.creationTimestamp + this.session.maxAge > timestamp) {
-            return this.session;
-        }
-        return (this.session = await this.createSession());
-    }
-    async createSession() {
-        const res = await this.request("/props/api/v1.0/sessions?" +
-            new URLSearchParams(this.getSecure("tr-text")).toString(), null);
-        if (!res.success) {
-            throw new OCRError("Failed to request create session", res);
-        }
-        return res.data.session;
-    }
     async scanByBlob(data) {
         const { id: sid } = await this.getSession();
         const body = new FormData();
-        body.append("file", data, "test");
-        const res = await this.request("/ocr/v1.1/recognize?" +
-            new URLSearchParams({
-                sid,
-                lang: "*",
-                rotate: "auto",
-                ...this.getSecure("tr-image"),
-            }).toString(), body);
-        if (!res.success) {
+        body.append("file", data, "image");
+        const params = this.getParams("tr-image", {
+            sid,
+            lang: "*",
+            rotate: "auto",
+        });
+        const res = await this.request(`/ocr/v1.1/recognize?${params}`, body);
+        if (!this.isSuccessProviderRes(res)) {
             throw new OCRError("Failed to request OCR", res);
         }
-        const blocks = res.data.data.blocks.map((block) => {
+        let resultData = res.data.data;
+        const textToTranslate = [];
+        let blocks = resultData.blocks.map((block) => {
             const text = block.boxes.map((box) => box.text).join(" ");
+            textToTranslate.push(text);
             return {
                 ...block,
                 text,
@@ -106,13 +92,28 @@ export default class OCRClient {
         });
         const text = blocks.map((block) => block.text).join("\n");
         const result = {
-            ...res.data.data,
+            ...resultData,
             blocks,
             text,
         };
+        if (!this.withTranslate) {
+            return result;
+        }
+        const translateData = await this.translate(textToTranslate, `${resultData.detected_lang}-${this.translateLang}`);
+        blocks = blocks.map((block, idx) => {
+            return {
+                ...block,
+                translatedText: translateData.translations?.[idx],
+            };
+        });
+        const translatedText = blocks
+            .map((block) => block.translatedText)
+            .join("\n");
         return {
-            status: res.success,
-            data: result,
+            ...resultData,
+            blocks,
+            text,
+            translatedText,
         };
     }
     async scanByFile(filepath) {

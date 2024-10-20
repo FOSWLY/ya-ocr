@@ -9,13 +9,13 @@
 
 ## Установка
 
-Установка для Bun:
+Установка с Bun:
 
 ```bash
 bun add ya-ocr
 ```
 
-Установка для NPM:
+Установка с NPM:
 
 ```bash
 npm install ya-ocr
@@ -55,14 +55,6 @@ bun install
 
 ```bash
 bun build:bun
-```
-
-#### Сборка TypeScript типов
-
-Вы можете воспользоваться данным вариантом сборки, если вы хотите собрать, только, типы для TypeScript:
-
-```bash
-bun build:declaration
 ```
 
 #### Сборка TypeBox типов

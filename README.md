@@ -9,13 +9,13 @@ An unofficial library to use Yandex OCR for free via Translation API, which supp
 
 ## Installation
 
-Installation for Bun:
+Installation via Bun:
 
 ```bash
 bun add ya-ocr
 ```
 
-Installation for NPM:
+Installation via NPM:
 
 ```bash
 npm install ya-ocr
@@ -55,14 +55,6 @@ Building the entire package:
 
 ```bash
 bun build:bun
-```
-
-#### Building TypeScript types
-
-You can use this build option if you only want to build types for TypeScript:
-
-```bash
-bun build:declaration
 ```
 
 #### Building a TypeBox of Types

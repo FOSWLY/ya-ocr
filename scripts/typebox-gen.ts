@@ -1,10 +1,14 @@
-import { readdir } from "node:fs/promises";
+import { readdir, rmdir } from "node:fs/promises";
 import { resolve } from "path";
 
 import * as Codegen from "@sinclair/typebox-codegen";
 
 const TYPES_DIR = resolve(import.meta.dir, "..", "src", "types");
 const OUTPUT_DIR = resolve(import.meta.dir, "..", "dist", "typebox");
+
+await rmdir(OUTPUT_DIR, {
+  recursive: true,
+});
 
 // read all the files in the current directory
 const files = await readdir(TYPES_DIR);

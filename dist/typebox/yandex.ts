@@ -1,24 +1,6 @@
 import { Type, Static } from '@sinclair/typebox'
 
 
-export type Session = Static<typeof Session>
-export const Session = Type.Object({
-creationTimestamp: Type.Number(),
-id: Type.String(),
-maxAge: Type.Number(),
-status: Type.String(),
-statusCode: Type.Number()
-})
-
-export type Srv = Static<typeof Srv>
-export const Srv = Type.Union([
-Type.Literal("tr-text"),
-Type.Literal("tr-image")
-])
-
-export type SessionResponse = Static<typeof SessionResponse>
-export const SessionResponse = Type.Record(Type.Literal("session"), Session)
-
 export type ErrorType = Static<typeof ErrorType>
 export const ErrorType = Type.Union([
 Type.Literal("BadArgument"),
