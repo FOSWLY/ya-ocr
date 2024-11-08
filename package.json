@@ -76,7 +76,7 @@
     "prepare": "husky"
   },
   "dependencies": {
-    "@toil/translate": "1.0.2",
+    "@toil/translate": "1.0.3",
     "clipboardy": "^4.0.0",
     "file-type": "^19.6.0"
   }
