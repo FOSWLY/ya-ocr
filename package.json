@@ -52,7 +52,7 @@
     "@types/eslint__js": "^8.42.3",
     "eslint": "^9.13.0",
     "eslint-plugin-oxlint": "^0.15.7",
-    "eslint-plugin-sonarjs": "^2.0.4",
+    "eslint-plugin-sonarjs": "^3.0.2",
     "husky": "^9.1.6",
     "oxlint": "^0.15.7",
     "tsc-alias": "^1.8.10",
