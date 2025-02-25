@@ -1,3 +1,11 @@
+# 1.1.1
+
+- Added all files types export
+- Rewritted typebox generation logic with `@toil/typebox-genx`
+- Removed eslint sonarjs
+- Updated github actions logic
+- Bump depends
+
 # 1.1.0
 
 - Added optional translate OCR text blocks response (without translate separated blocks and translate separated words)
