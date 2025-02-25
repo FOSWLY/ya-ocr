@@ -126,9 +126,7 @@ export default class OCRClient extends YandexTranslateProvider {
     }
 
     let resultData = res.data.data;
-
     const textToTranslate: string[] = [];
-
     let blocks: OCRFullBlock[] = resultData.blocks.map((block) => {
       const text = block.boxes.map((box) => box.text).join(" ");
       textToTranslate.push(text);
@@ -196,7 +194,6 @@ export default class OCRClient extends YandexTranslateProvider {
       buffer.byteOffset,
       buffer.byteOffset + buffer.byteLength,
     ) as ArrayBuffer;
-
     const fileType = await fileTypeFromBuffer(arrayBuffer);
     if (!fileType || !supportedTypes.includes(fileType.mime)) {
       throw new OCRError(`Unsupported file type: ${fileType?.mime}`);
@@ -213,7 +210,6 @@ export default class OCRClient extends YandexTranslateProvider {
     }
 
     const fileUrl = new URL(url) as URL;
-
     const res = await this.fetch(fileUrl, {
       headers: {
         ...this.headers,
