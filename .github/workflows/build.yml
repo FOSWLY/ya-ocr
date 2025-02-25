@@ -1,6 +1,6 @@
 name: Build
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_call]
 
 permissions:
   contents: write
@@ -22,10 +22,16 @@ jobs:
         run: bun install
 
       - name: Build 🚧
-        run: bun build:bun
+        run: bun build:all
 
-      - name: Upload Artifact 🚀
+      - name: Upload Package artifact 🚀
         uses: actions/upload-artifact@v4
         with:
           name: ya-ocr
           path: dist/*
+
+      - name: Upload Docs artifact 🚀
+        id: deployment
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs
