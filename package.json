@@ -53,7 +53,7 @@
   ],
   "devDependencies": {
     "@eslint/js": "^9.21.0",
-    "@toil/typebox-genx": "^0.0.1",
+    "@toil/typebox-genx": "^0.1.0",
     "@types/bun": "latest",
     "eslint": "^9.13.0",
     "eslint-plugin-oxlint": "^0.15.7",
