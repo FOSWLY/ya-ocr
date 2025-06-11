@@ -56,7 +56,7 @@
     "@toil/typebox-genx": "^0.1.0",
     "@types/bun": "latest",
     "eslint": "^9.13.0",
-    "eslint-plugin-oxlint": "^0.16.12",
+    "eslint-plugin-oxlint": "^1.0.0",
     "husky": "^9.1.6",
     "oxlint": "^0.16.12",
     "tsc-alias": "^1.8.10",
