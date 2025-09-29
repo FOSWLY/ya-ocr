@@ -81,7 +81,7 @@
   },
   "dependencies": {
     "@toil/translate": "^1.0.6",
-    "clipboardy": "^4.0.0",
+    "clipboardy": "^5.0.0",
     "file-type": "^21.0.0"
   }
 }
