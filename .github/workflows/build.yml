@@ -25,7 +25,7 @@ jobs:
         run: bun build:all
 
       - name: Upload Package artifact 🚀
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ya-ocr
           path: dist/*
