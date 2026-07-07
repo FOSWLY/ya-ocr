@@ -23,7 +23,8 @@ test("scan with translate", async () => {
     translateLang: "ru",
   });
   const res = await translateClient.scanByFile(
-    path.resolve(__dirname, "test.jpg"),
+    path.resolve(__dirname, "test-en.jpg"),
   );
   expect(res.translatedText!.length).toBeGreaterThan(0);
+  expect(res.svg).toStartWith("<svg");
 });

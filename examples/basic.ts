@@ -14,7 +14,7 @@ response = await client.scanByFile("../tests/test.jpg");
 
 console.log(response);
 
-// with translate text
+// with translate text + return translated image as svg
 const translateClient = new OCRClient({
   withTranslate: true,
   translateLang: "ru",

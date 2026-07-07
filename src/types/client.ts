@@ -1,7 +1,7 @@
 import { ClientType } from "@toil/translate/types";
 
 import { supportedTypes } from "@/consts";
-import { OCRBlock, OCRData } from "./yandex";
+import { OCRBlock, OCRBox, OCRData } from "./yandex";
 
 export type SupportedType = (typeof supportedTypes)[number];
 
@@ -14,13 +14,19 @@ export type OCROpts = {
   headers?: Record<string, string>;
 };
 
+export interface OCRFullBox extends OCRBox {
+  translatedText?: string;
+}
+
 export interface OCRFullBlock extends OCRBlock {
   text: string;
   translatedText?: string;
+  boxes: OCRFullBox[];
 }
 
 export interface OCRFullData extends OCRData {
   text: string;
   translatedText?: string;
+  svg?: string;
   blocks: OCRFullBlock[];
 }

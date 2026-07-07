@@ -1,3 +1,19 @@
+# 1.2.0
+
+## Core
+
+- Implemented overlaying translated text blocks to image. Outputs as field `svg` contains svg image code
+
+## Workspace
+
+- Migrated **Eslint**/**Prettier**/**Husky** -> **Oxlint**/**Oxfmt**/**Lefthook**
+- Bump depends
+
+# 1.1.2
+
+- Bump depends
+- Updated sharex readme
+
 # 1.1.1
 
 - Added all files types export

@@ -1,6 +1,6 @@
 # ya-ocr
 
-[![GitHub Actions](https://github.com/FOSWLY/ya-ocr/actions/workflows/ci.yml/badge.svg)](https://github.com/FOSWLY/ya-ocr/actions/workflows/ci.yml)
+[![GitHub Actions](https://github.com/FOSWLY/ya-ocr/actions/workflows/build.yml/badge.svg)](https://github.com/FOSWLY/ya-ocr/actions/workflows/build.yml)
 [![npm](https://img.shields.io/bundlejs/size/ya-ocr)](https://www.npmjs.com/package/ya-ocr)
 [![ru](https://img.shields.io/badge/%D1%8F%D0%B7%D1%8B%D0%BA-%D0%A0%D1%83%D1%81%D1%81%D0%BA%D0%B8%D0%B9%20%F0%9F%87%B7%F0%9F%87%BA-white)](README-RU.md)
 [![en](https://img.shields.io/badge/lang-English%20%F0%9F%87%AC%F0%9F%87%A7-white)](README.md)
@@ -31,6 +31,18 @@ const client = new OCRClient();
 const result = await client.scanByUrl(
   "https://repository-images.githubusercontent.com/450906609/c04b600b-5f0f-488b-820d-ffaeb1fde2d0",
 );
+```
+
+### Translation & SVG overlay
+
+Pass `withTranslate: true` when creating the client to automatically translate detected text. The result will include a `translatedText` field and an `svg` field — an SVG string that embeds the original image with translated text rendered along the original text paths.
+
+```ts
+const client = new OCRClient({ withTranslate: true });
+
+const result = await client.scanByUrl("https://example.com/image.jpg");
+console.log(result.translatedText); // translated text
+console.log(result.svg); // '<svg>...</svg>' overlay image
 ```
 
 You can see more code examples [here](https://github.com/FOSWLY/ya-ocr/tree/main/examples)

@@ -1,4 +1,4 @@
-import path from "node:path";
+import { resolve } from "node:path";
 import { readFile } from "node:fs/promises";
 import { fileTypeFromBuffer } from "file-type";
 import { YandexTranslateProvider } from "@toil/translate/providers";
@@ -12,6 +12,7 @@ import { ProviderError } from "@toil/translate/errors";
 import { OCRFullBlock, OCRFullData, OCROpts } from "@/types/client";
 import { OCRSuccessResponse } from "@/types/yandex";
 import { supportedTypes } from "@/consts";
+import { getOverlay } from "./utils/overlay";
 
 class OCRError extends Error {
   constructor(
@@ -31,7 +32,7 @@ export default class OCRClient extends YandexTranslateProvider {
 
   /**
    * If you don't want to use the classic fetch
-   * @includeExample examples/with_ofetch.ts:1-13
+   * @includeExample examples/with_ofetch.ts[1:13]
    */
   constructor(params: OCROpts = {}) {
     super(params);
@@ -128,7 +129,7 @@ export default class OCRClient extends YandexTranslateProvider {
     let resultData = res.data.data;
     const textToTranslate: string[] = [];
     let blocks: OCRFullBlock[] = resultData.blocks.map((block) => {
-      const text = block.boxes.map((box) => box.text).join(" ");
+      const text = block.boxes.map((box) => box.text).join("\n\n");
       textToTranslate.push(text);
       return {
         ...block,
@@ -153,25 +154,39 @@ export default class OCRClient extends YandexTranslateProvider {
     );
 
     blocks = blocks.map((block, idx) => {
+      const translatedText = translateData.translations?.[idx];
+      const blockTranslates = translateData.translations?.[idx]?.split("\n\n");
+      const boxes = block.boxes.map((box, boxIdx) => {
+        const boxTranslatedText = blockTranslates?.[boxIdx];
+        return {
+          ...box,
+          translatedText: boxTranslatedText,
+        };
+      });
+
       return {
         ...block,
-        translatedText: translateData.translations?.[idx],
+        boxes,
+        translatedText: translatedText,
       };
     });
     const translatedText = blocks
-      .map((block) => block.translatedText)
+      .map((block) => block.translatedText?.replaceAll("\n\n", " "))
       .join("\n");
+
+    const svg = await getOverlay(data, blocks);
 
     return {
       ...resultData,
       blocks,
       text,
       translatedText,
+      svg,
     };
   }
 
   async scanByFile(filepath: string) {
-    const fullpath = path.resolve(__dirname, filepath);
+    const fullpath = resolve(__dirname, filepath);
     let buffer: Buffer | null = null;
     try {
       buffer = await readFile(fullpath);
