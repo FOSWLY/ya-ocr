@@ -1,6 +1,7 @@
 {
   // https://github.com/runneljs/runnel/blob/main/packages/runnel/tsconfig.json
   "compilerOptions": {
+    "types": ["bun"],
     // Enable latest features
     "lib": ["ESNext"],
     "target": "ESNext",

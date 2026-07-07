@@ -3,6 +3,8 @@
 dist/*
 docs/*
 
+.vscode
+
 # Logs
 
 logs
