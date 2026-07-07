@@ -11,7 +11,7 @@ jobs:
 
     steps:
       - name: Checkout 🛎️
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -25,13 +25,13 @@ jobs:
         run: bun build:all
 
       - name: Upload Package artifact 🚀
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ya-ocr
           path: dist/*
 
       - name: Upload Docs artifact 🚀
         id: deployment
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs
