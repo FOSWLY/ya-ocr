@@ -1,4 +1,4 @@
-import imageSize from "@coderosh/image-size";
+import { imageDimensionsFromData } from "image-dimensions";
 
 import { OCRFullBlock, OCRFullBox } from "@/types/client";
 import { escapeXml, formatNumber, getTextWidth, toRgba } from "./text";
@@ -139,10 +139,13 @@ const renderBox = (idx: number, box: OCRFullBox) => {
 };
 
 export async function getOverlay(imageBlob: Blob, blocks: OCRFullBlock[]) {
-  const imageBuffer = Buffer.from(await imageBlob.arrayBuffer());
-  const image = await imageSize(imageBuffer);
+  const imageData = await imageBlob.bytes();
+  const image = imageDimensionsFromData(imageData);
+  if (!image) {
+    throw new Error("Failed to get image dimensions");
+  }
 
-  const imageBase64 = imageBuffer.toString("base64");
+  const imageBase64 = imageData.toBase64();
   const boxes = blocks.flatMap((block) => block.boxes);
 
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${image.width}" height="${image.height}" viewBox="0 0 ${image.width} ${image.height}">
