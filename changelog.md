@@ -1,3 +1,9 @@
+# 1.2.1
+
+- Using native convert from Blob to base64 instead of Buffer for compatibility with browser
+- Migrated **image-size** -> **image-dimensions** for better browser compatibility
+- Updated translate text blocks logic to use `<wbr>` as a separator instead of `\n\n`
+
 # 1.2.0
 
 ## Core

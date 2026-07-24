@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     // Enable latest features
+    "types": ["bun"],
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",

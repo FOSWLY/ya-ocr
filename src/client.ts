@@ -129,7 +129,7 @@ export default class OCRClient extends YandexTranslateProvider {
     let resultData = res.data.data;
     const textToTranslate: string[] = [];
     let blocks: OCRFullBlock[] = resultData.blocks.map((block) => {
-      const text = block.boxes.map((box) => box.text).join("\n\n");
+      const text = block.boxes.map((box) => box.text).join("<wbr>");
       textToTranslate.push(text);
       return {
         ...block,
@@ -148,14 +148,16 @@ export default class OCRClient extends YandexTranslateProvider {
       return result;
     }
 
-    const translateData = await this.translate(
+    const translateData = await this.rawTranslate(
       textToTranslate,
       `${resultData.detected_lang}-${this.translateLang}`,
+      undefined,
+      "html",
     );
 
     blocks = blocks.map((block, idx) => {
       const translatedText = translateData.translations?.[idx];
-      const blockTranslates = translateData.translations?.[idx]?.split("\n\n");
+      const blockTranslates = translateData.translations?.[idx]?.split("<wbr>");
       const boxes = block.boxes.map((box, boxIdx) => {
         const boxTranslatedText = blockTranslates?.[boxIdx];
         return {
@@ -171,7 +173,7 @@ export default class OCRClient extends YandexTranslateProvider {
       };
     });
     const translatedText = blocks
-      .map((block) => block.translatedText?.replaceAll("\n\n", " "))
+      .map((block) => block.translatedText?.replace("<wbr>", " "))
       .join("\n");
 
     const svg = await getOverlay(data, blocks);
